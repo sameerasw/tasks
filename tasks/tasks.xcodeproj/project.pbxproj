@@ -9,15 +9,30 @@
 /* Begin PBXBuildFile section */
 		B9DBC7FD2E9962D70060094C /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = B9DBC7FC2E9962D70060094C /* GoogleSignIn */; };
 		B9DBC7FF2E9962D70060094C /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = B9DBC7FE2E9962D70060094C /* GoogleSignInSwift */; };
+		B9DBC8242E996E080060094C /* Secrets.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = B9DBC8232E996E050060094C /* Secrets.xcconfig */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		B9DBC7ED2E9961C10060094C /* tasks.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = tasks.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B9DBC8232E996E050060094C /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		B9DBC8262E9970660060094C /* Exceptions for "tasks" folder in "tasks" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = B9DBC7EC2E9961C10060094C /* tasks */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		B9DBC7EF2E9961C10060094C /* tasks */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				B9DBC8262E9970660060094C /* Exceptions for "tasks" folder in "tasks" target */,
+			);
 			path = tasks;
 			sourceTree = "<group>";
 		};
@@ -39,6 +54,7 @@
 		B9DBC7E42E9961C10060094C = {
 			isa = PBXGroup;
 			children = (
+				B9DBC8232E996E050060094C /* Secrets.xcconfig */,
 				B9DBC7EF2E9961C10060094C /* tasks */,
 				B9DBC7EE2E9961C10060094C /* Products */,
 			);
@@ -121,6 +137,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B9DBC8242E996E080060094C /* Secrets.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -139,6 +156,7 @@
 /* Begin XCBuildConfiguration section */
 		B9DBC7F62E9961C20060094C /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = B9DBC8232E996E050060094C /* Secrets.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -203,6 +221,7 @@
 		};
 		B9DBC7F72E9961C20060094C /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = B9DBC8232E996E050060094C /* Secrets.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -259,6 +278,7 @@
 		};
 		B9DBC7F92E9961C20060094C /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = B9DBC8232E996E050060094C /* Secrets.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -281,6 +301,7 @@
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = tasks/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -302,6 +323,7 @@
 		};
 		B9DBC7FA2E9961C20060094C /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = B9DBC8232E996E050060094C /* Secrets.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -324,6 +346,7 @@
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = tasks/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
