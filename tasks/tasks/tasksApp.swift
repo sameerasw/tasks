@@ -6,12 +6,16 @@
 //
 
 import SwiftUI
+import Combine
 
 @main
 struct tasksApp: App {
+    @StateObject private var auth = AuthenticationManager()
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(auth)
         }
     }
 }
