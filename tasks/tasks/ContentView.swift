@@ -66,7 +66,6 @@ struct ContentView: View {
                     Label("Load Task Lists", systemImage: "tray.full")
                 }
 
-                // Account menu: sign in / show auth info / sign out
                 Menu {
                     if auth.isSignedIn {
                         Button("Auth Info") {
@@ -147,90 +146,4 @@ struct ContentView: View {
 #Preview {
     ContentView()
         .environmentObject(AuthenticationManager())
-}
-
-fileprivate struct TaskListTab: View {
-    let list: TaskList
-    let tasksService: TasksService
-    @ObservedObject var auth: AuthenticationManager
-    @State private var tasks: [TaskItem] = []
-    @Binding var alertMessage: String
-    @Binding var showingAlert: Bool
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(list.title ?? "(no title)")
-                .font(.title)
-                .padding(.top)
-
-            if tasks.isEmpty {
-                Text("No tasks loaded")
-                    .foregroundColor(.secondary)
-            }
-
-            ScrollView {
-                LazyVStack(spacing: 12) {
-                    ForEach(tasks) { t in
-                        TaskCard(task: t)
-                            .padding([.leading, .trailing])
-                    }
-                }
-                .padding(.bottom)
-            }
-        }
-        .padding()
-        .onAppear {
-            Task {
-                do {
-                    let token = try await auth.getValidAccessToken()
-                    let items = try await tasksService.listTasks(accessToken: token, tasklistId: list.id)
-                    DispatchQueue.main.async {
-                        self.tasks = items
-                    }
-                } catch {
-                    let msg = "Failed to load tasks: \(error)"
-                    print(msg)
-                    alertMessage = msg
-                    showingAlert = true
-                }
-            }
-        }
-    }
-}
-
-
-fileprivate struct TaskCard: View {
-    let task: TaskItem
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text(task.title ?? "(no title)")
-                    .font(.headline)
-                Spacer()
-                if task.status == "completed" {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
-                }
-            }
-
-            if let notes = task.notes, !notes.isEmpty {
-                Text(notes)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .lineLimit(3)
-            }
-
-            HStack {
-                if let due = task.due, let date = ISO8601DateFormatter().date(from: due) {
-                    Text(date, style: .date)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                Spacer()
-            }
-        }
-        .padding()
-        .background(RoundedRectangle(cornerRadius: 10).fill(Color(NSColor.windowBackgroundColor)).shadow(radius: 1))
-    }
 }
