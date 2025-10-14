@@ -22,7 +22,6 @@ struct ContentView: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            AppHeaderView()
 
             if viewModel.loading { ProgressView() }
 
@@ -33,15 +32,7 @@ struct ContentView: View {
                 TaskListsView(viewModel: viewModel)
                     .environmentObject(auth)
             }
-
-            if !viewModel.debugInfo.isEmpty {
-                DebugPanelView(debugInfo: viewModel.debugInfo)
-            } else {
-                Text("Not signed in")
-                    .foregroundColor(.secondary)
-            }
         }
-        .padding()
         .frame(minWidth: 320, minHeight: 240)
         .toolbar { AppToolbar(viewModel: viewModel, auth: auth, showingNewTaskSheet: $showingNewTaskSheet, showAuthInfo: showAuthInfo, signIn: signIn, signOut: signOut) }
         .alert("Error", isPresented: $viewModel.showingAlert, actions: { Button("OK", role: .cancel) {} }, message: { Text(viewModel.alertMessage) })

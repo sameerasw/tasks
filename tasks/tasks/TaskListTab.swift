@@ -20,9 +20,6 @@ struct TaskListTab: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(list.title ?? "(no title)")
-                .font(.title)
-                .padding([.top, .leading, .trailing])
 
             List {
                 if vm.tasks.isEmpty {
@@ -42,7 +39,7 @@ struct TaskListTab: View {
                     }
                 }
             }
-            .listStyle(.inset)
+            .listStyle(.sidebar)
         }
         .onAppear {
             Task { await loadTasks(policy: hasLoadedOnce ? .staleOnly : .startup) }
