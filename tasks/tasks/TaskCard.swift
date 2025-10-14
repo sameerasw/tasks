@@ -32,6 +32,7 @@ struct TaskCard: View {
             }
         }
         .padding()
-        .background(RoundedRectangle(cornerRadius: 10).fill(Color(NSColor.windowBackgroundColor)).shadow(radius: 1))
+        .background(.clear)
+        .glassEffect(in: .rect(cornerRadius: 16))
     }
 }

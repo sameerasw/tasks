@@ -9,14 +9,29 @@ struct TaskListsView: View {
             Task { @MainActor in await Task.yield(); viewModel.selectedListId = newValue }
         })
 
-        TabView(selection: selectionBinding) {
-            ForEach(viewModel.taskLists) { list in
+        NavigationSplitView {
+            List(selection: selectionBinding) {
+                ForEach(viewModel.taskLists) { list in
+                    Text(list.title ?? "(no title)")
+                        .tag(list.id)
+                        .onTapGesture {
+                            Task { @MainActor in await Task.yield(); viewModel.selectedListId = list.id }
+                        }
+                }
+            }
+            .listStyle(.sidebar)
+        } detail: {
+            if let selectedId = viewModel.selectedListId, let list = viewModel.taskLists.first(where: { $0.id == selectedId }) {
                 TaskListTab(list: list, repository: viewModel.repository, auth: auth, alertMessage: $viewModel.alertMessage, showingAlert: $viewModel.showingAlert)
-                    .tabItem { Text(list.title ?? "(no title)") }
-                    .tag(Optional(list.id))
+                    .id(list.id)
+            } else if let first = viewModel.taskLists.first {
+                // fallback to first list when selection is nil
+                TaskListTab(list: first, repository: viewModel.repository, auth: auth, alertMessage: $viewModel.alertMessage, showingAlert: $viewModel.showingAlert)
+                    .id(first.id)
+            } else {
+                Text("No lists available").foregroundColor(.secondary)
             }
         }
-        .tabViewStyle(.automatic)
         .frame(minHeight: 240)
     }
 }

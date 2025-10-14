@@ -27,7 +27,6 @@ struct TaskListTab: View {
                 } else {
                     ForEach(vm.tasks) { task in
                         TaskCard(task: task)
-                            .listRowInsets(EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12))
                             .swipeActions(edge: .leading, allowsFullSwipe: true) {
                                 CompletionActionView(isCompleted: task.status == "completed") { toggleCompletion(for: task) }
                             }
