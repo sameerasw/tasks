@@ -72,7 +72,7 @@ struct ContentView: View {
                 Button {
                     loadTaskLists()
                 } label: {
-                    Label("Load Task Lists", systemImage: "tray.full")
+                    Label("Load Task Lists", systemImage: "repeat")
                 }
 
                 Button {
