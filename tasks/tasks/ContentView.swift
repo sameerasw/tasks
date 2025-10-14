@@ -13,6 +13,8 @@ struct ContentView: View {
     @StateObject private var viewModel: ContentViewModel
     @State private var refreshTimer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
     @State private var showingNewTaskSheet = false
+    @State private var showingSignInSheet = false
+    @State private var showingAboutSheet = false
     @State private var newTaskTitle = ""
     @FocusState private var newTaskFieldFocused: Bool
 
@@ -34,7 +36,7 @@ struct ContentView: View {
             }
         }
         .frame(minWidth: 320, minHeight: 240)
-        .toolbar { AppToolbar(viewModel: viewModel, auth: auth, showingNewTaskSheet: $showingNewTaskSheet, showAuthInfo: showAuthInfo, signIn: signIn, signOut: signOut) }
+    .toolbar { AppToolbar(viewModel: viewModel, auth: auth, showingNewTaskSheet: $showingNewTaskSheet, showAuthInfo: showAuthInfo, signIn: signIn, signOut: signOut, showAbout: { showingAboutSheet = true }) }
         .alert("Error", isPresented: $viewModel.showingAlert, actions: { Button("OK", role: .cancel) {} }, message: { Text(viewModel.alertMessage) })
         .task {
             guard !viewModel.hasLoadedOnce else { return }
@@ -61,6 +63,15 @@ struct ContentView: View {
             })
             .onDisappear { newTaskTitle = ""; newTaskFieldFocused = false }
         }
+        .sheet(isPresented: $showingSignInSheet) {
+            SignInView()
+                .environmentObject(auth)
+        }
+        .sheet(isPresented: $showingAboutSheet) {
+            AboutView {
+                showingAboutSheet = false
+            }
+        }
     }
 
     private func showAuthInfo() {
@@ -72,10 +83,9 @@ struct ContentView: View {
     }
 
     private func signIn() {
-        Task {
-            do { try await auth.signIn() }
-            catch { Task { @MainActor in await Task.yield(); viewModel.alertMessage = "Sign in failed: \(error)"; viewModel.showingAlert = true } }
-        }
+        // Present a sheet allowing the user to optionally provide a custom
+        // client ID before initiating the sign-in flow.
+        showingSignInSheet = true
     }
 
     private func signOut() {

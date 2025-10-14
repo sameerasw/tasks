@@ -7,6 +7,7 @@ struct AppToolbar: ToolbarContent {
     let showAuthInfo: () -> Void
     let signIn: () -> Void
     let signOut: () -> Void
+    let showAbout: () -> Void
 
     var body: some ToolbarContent {
         ToolbarItemGroup {
@@ -17,11 +18,13 @@ struct AppToolbar: ToolbarContent {
 
             Menu {
                 if auth.isSignedIn {
-                    Button("Auth Info") { showAuthInfo() }
                     Button("Sign Out") { signOut() }
                 } else {
                     Button("Sign in with Google") { signIn() }
                 }
+
+                Divider()
+                Button("About") { showAbout() }
             } label: {
                 if auth.isSignedIn { Label(auth.email ?? "Account", systemImage: "person.crop.circle") }
                 else { Label("Account", systemImage: "person.crop.circle") }
