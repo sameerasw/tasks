@@ -22,14 +22,9 @@ struct ContentView: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            Image(systemName: "checkmark.circle")
-                .resizable()
-                .frame(width: 64, height: 64)
-                .foregroundColor(.accentColor)
+            AppHeaderView()
 
-            if viewModel.loading {
-                ProgressView()
-            }
+            if viewModel.loading { ProgressView() }
 
             if viewModel.taskLists.isEmpty {
                 Text("No task lists loaded")
@@ -51,12 +46,7 @@ struct ContentView: View {
             }
 
             if !viewModel.debugInfo.isEmpty {
-                Divider()
-                Text("Debug")
-                    .font(.headline)
-                Text(viewModel.debugInfo)
-                    .font(.system(.body, design: .monospaced))
-                    .padding()
+                DebugPanelView(debugInfo: viewModel.debugInfo)
             } else {
                 Text("Not signed in")
                     .foregroundColor(.secondary)

@@ -1,41 +1,5 @@
 import Foundation
 
-struct TaskList: Codable, Identifiable, Sendable {
-    let id: String
-    let title: String?
-    let kind: String?
-    let etag: String?
-    let updated: String?
-    let selfLink: String?
-}
-
-struct TasksListResponse: Codable, Sendable {
-    let items: [TaskItem]?
-}
-
-struct TaskItem: Codable, Identifiable, Sendable {
-    let id: String
-    let title: String?
-    let notes: String?
-    let status: String?
-    let due: String?
-    let completed: String?
-    let deleted: Bool?
-    let hidden: Bool?
-    let links: [TaskLink]?
-    let webViewLink: String?
-    let parent: String?
-    let position: String?
-    let selfLink: String?
-    let etag: String?
-}
-
-struct TaskLink: Codable, Sendable {
-    let type: String?
-    let description: String?
-    let link: String?
-}
-
 enum TasksServiceError: Error {
     case unauthorized
     case network(Error)
@@ -177,9 +141,4 @@ final class TasksService: @unchecked Sendable {
         catch let err as DecodingError { throw TasksServiceError.decoding(err) }
         catch { throw TasksServiceError.network(error) }
     }
-}
-
-// Wrapper for tasklists list endpoint
-private struct TaskListsResponse: Codable {
-    let items: [TaskList]?
 }

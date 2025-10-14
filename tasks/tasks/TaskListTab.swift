@@ -31,8 +31,12 @@ struct TaskListTab: View {
                     ForEach(vm.tasks) { task in
                         TaskCard(task: task)
                             .listRowInsets(EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12))
-                            .swipeActions(edge: .leading, allowsFullSwipe: true) { completionSwipeButton(for: task) }
-                            .swipeActions(edge: .trailing, allowsFullSwipe: true) { completionSwipeButton(for: task) }
+                            .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                                CompletionActionView(isCompleted: task.status == "completed") { toggleCompletion(for: task) }
+                            }
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                CompletionActionView(isCompleted: task.status == "completed") { toggleCompletion(for: task) }
+                            }
                             .contextMenu { Button(role: .destructive) { deleteTask(task) } label: { Label("Delete Task", systemImage: "trash") } }
                             .listRowBackground(Color.clear)
                     }
