@@ -30,19 +30,8 @@ struct ContentView: View {
                 Text("No task lists loaded")
                     .foregroundColor(.secondary)
             } else {
-                let selectionBinding = Binding<String?>(get: { viewModel.selectedListId }, set: { newValue in
-                    Task { @MainActor in await Task.yield(); viewModel.selectedListId = newValue }
-                })
-
-                TabView(selection: selectionBinding) {
-                    ForEach(viewModel.taskLists) { list in
-                        TaskListTab(list: list, repository: viewModel.repository, auth: auth, alertMessage: $viewModel.alertMessage, showingAlert: $viewModel.showingAlert)
-                            .tabItem { Text(list.title ?? "(no title)") }
-                            .tag(Optional(list.id))
-                    }
-                }
-                .tabViewStyle(.automatic)
-                .frame(minHeight: 240)
+                TaskListsView(viewModel: viewModel)
+                    .environmentObject(auth)
             }
 
             if !viewModel.debugInfo.isEmpty {
@@ -54,26 +43,7 @@ struct ContentView: View {
         }
         .padding()
         .frame(minWidth: 320, minHeight: 240)
-        .toolbar {
-            ToolbarItemGroup {
-                Button { Task { viewModel.loading = true; await viewModel.refreshTaskLists(policy: .force, auth: auth) } } label: { Label("Load Task Lists", systemImage: "repeat") }
-
-                Button { showingNewTaskSheet = true } label: { Label("New Task", systemImage: "plus") }
-                    .disabled(viewModel.selectedListId == nil || !auth.isSignedIn)
-
-                Menu {
-                    if auth.isSignedIn {
-                        Button("Auth Info") { showAuthInfo() }
-                        Button("Sign Out") { signOut() }
-                    } else {
-                        Button("Sign in with Google") { signIn() }
-                    }
-                } label: {
-                    if auth.isSignedIn { Label(auth.email ?? "Account", systemImage: "person.crop.circle") }
-                    else { Label("Account", systemImage: "person.crop.circle") }
-                }
-            }
-        }
+        .toolbar { AppToolbar(viewModel: viewModel, auth: auth, showingNewTaskSheet: $showingNewTaskSheet, showAuthInfo: showAuthInfo, signIn: signIn, signOut: signOut) }
         .alert("Error", isPresented: $viewModel.showingAlert, actions: { Button("OK", role: .cancel) {} }, message: { Text(viewModel.alertMessage) })
         .task {
             guard !viewModel.hasLoadedOnce else { return }
