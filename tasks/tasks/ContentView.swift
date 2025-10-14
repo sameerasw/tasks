@@ -13,6 +13,7 @@ struct ContentView: View {
     let repository: TasksRepository
 
     @State private var taskLists: [TaskList] = []
+    @State private var selectedListId: String? = nil
     @State private var loading = false
     @State private var alertMessage: String = ""
     @State private var showingAlert: Bool = false
@@ -20,6 +21,9 @@ struct ContentView: View {
     @State private var hasLoadedOnce = false
     @State private var refreshTimer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
     @State private var refreshInProgress = false
+    @State private var showingNewTaskSheet = false
+    @State private var newTaskTitle = ""
+    @FocusState private var newTaskFieldFocused: Bool
 
     var body: some View {
         VStack(spacing: 16) {
@@ -36,13 +40,13 @@ struct ContentView: View {
                 Text("No task lists loaded")
                     .foregroundColor(.secondary)
             } else {
-                TabView {
+                TabView(selection: $selectedListId) {
                     ForEach(taskLists) { list in
                         TaskListTab(list: list, repository: repository, auth: auth, alertMessage: $alertMessage, showingAlert: $showingAlert)
                             .tabItem {
                                 Text(list.title ?? "(no title)")
                             }
-                            .tag(list.id)
+                            .tag(Optional(list.id))
                     }
                 }
                 .tabViewStyle(.automatic)
@@ -70,6 +74,13 @@ struct ContentView: View {
                 } label: {
                     Label("Load Task Lists", systemImage: "tray.full")
                 }
+
+                Button {
+                    showingNewTaskSheet = true
+                } label: {
+                    Label("New Task", systemImage: "plus")
+                }
+                .disabled(selectedListId == nil || !auth.isSignedIn)
 
                 Menu {
                     if auth.isSignedIn {
@@ -109,7 +120,8 @@ struct ContentView: View {
                 await refreshIfNeededForTimer()
             }
         }
-        .onChange(of: auth.isSignedIn) { signedIn in
+        .onChange(of: auth.isSignedIn) { previous, current in
+            let signedIn = current
             if signedIn {
                 Task {
                     await loadCachedTaskLists()
@@ -117,6 +129,19 @@ struct ContentView: View {
                 }
             } else {
                 taskLists = []
+                selectedListId = nil
+            }
+        }
+        .sheet(isPresented: $showingNewTaskSheet) {
+            NewTaskSheet(title: $newTaskTitle, isFocused: $newTaskFieldFocused, onCreate: { title in
+                createTask(with: title)
+            }, onCancel: {
+                showingNewTaskSheet = false
+                newTaskTitle = ""
+            })
+            .onDisappear {
+                newTaskTitle = ""
+                newTaskFieldFocused = false
             }
         }
     }
@@ -152,6 +177,7 @@ struct ContentView: View {
     private func signOut() {
         auth.signOut()
         taskLists = []
+        selectedListId = nil
         Task {
             await repository.clearAll()
         }
@@ -161,6 +187,11 @@ struct ContentView: View {
         let cached = await repository.cachedTaskLists()
         await MainActor.run {
             self.taskLists = cached
+            if selectedListId == nil {
+                self.selectedListId = cached.first?.id
+            } else if let current = selectedListId, !cached.contains(where: { $0.id == current }) {
+                self.selectedListId = cached.first?.id
+            }
         }
     }
 
@@ -186,6 +217,11 @@ struct ContentView: View {
                 self.taskLists = lists
                 self.loading = false
                 self.refreshInProgress = false
+                if let current = selectedListId, lists.contains(where: { $0.id == current }) {
+                    // keep selection
+                } else {
+                    self.selectedListId = lists.first?.id
+                }
             }
 
             if didRefresh || policy == .startup || policy == .force {
@@ -236,9 +272,70 @@ struct ContentView: View {
 
         await refreshTaskLists(policy: .staleOnly)
     }
+
+    private func createTask(with title: String) {
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, let listId = selectedListId else { return }
+
+        Task {
+            do {
+                let token = try await auth.getValidAccessToken()
+                _ = try await repository.createTask(accessToken: token, listId: listId, title: trimmed)
+                await MainActor.run {
+                    NotificationCenter.default.post(name: .taskListDidChange, object: listId)
+                    showingNewTaskSheet = false
+                    newTaskTitle = ""
+                }
+            } catch {
+                let message = "Failed to create task: \(error)"
+                print(message)
+                await MainActor.run {
+                    alertMessage = message
+                    showingAlert = true
+                }
+            }
+        }
+    }
 }
 
 #Preview {
     ContentView(repository: TasksRepository())
         .environmentObject(AuthenticationManager())
+}
+
+private struct NewTaskSheet: View {
+    @Binding var title: String
+    let isFocused: FocusState<Bool>.Binding
+    let onCreate: (String) -> Void
+    let onCancel: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("New Task")
+                .font(.headline)
+
+            TextField("Title", text: $title)
+                .textFieldStyle(.roundedBorder)
+                .focused(isFocused)
+                .onAppear {
+                    DispatchQueue.main.async {
+                        isFocused.wrappedValue = true
+                    }
+                }
+
+            HStack {
+                Spacer()
+                Button("Cancel") {
+                    onCancel()
+                }
+                Button("Create") {
+                    onCreate(title)
+                }
+                .keyboardShortcut(.defaultAction)
+                .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+        }
+        .padding(24)
+        .frame(width: 320)
+    }
 }

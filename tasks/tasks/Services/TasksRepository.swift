@@ -11,26 +11,30 @@ actor TasksRepository {
     private let service = TasksService()
     private let staleInterval: TimeInterval = 30 * 60
 
-    func cachedTaskLists() -> [TaskList] {
-        cache.cachedTaskLists()?.value ?? []
+    func cachedTaskLists() async -> [TaskList] {
+        let cached = await cache.cachedTaskLists()
+        return cached?.value ?? []
     }
 
-    func cachedTasks(for listId: String) -> [TaskItem] {
-        cache.cachedTasks(for: listId)?.value ?? []
+    func cachedTasks(for listId: String) async -> [TaskItem] {
+        let cached = await cache.cachedTasks(for: listId)
+        return cached?.value ?? []
     }
 
-    func lastTaskListRefreshDate() -> Date? {
-        cache.cachedTaskLists()?.storedAt
+    func lastTaskListRefreshDate() async -> Date? {
+        let cached = await cache.cachedTaskLists()
+        return cached?.storedAt
     }
 
-    func lastTasksRefreshDate(for listId: String) -> Date? {
-        cache.cachedTasks(for: listId)?.storedAt
+    func lastTasksRefreshDate(for listId: String) async -> Date? {
+        let cached = await cache.cachedTasks(for: listId)
+        return cached?.storedAt
     }
 
     var refreshInterval: TimeInterval { staleInterval }
 
     func loadTaskLists(accessToken: String, policy: RefreshPolicy) async throws -> [TaskList] {
-        let cached = cache.cachedTaskLists()
+        let cached = await cache.cachedTaskLists()
         let needsRefresh = shouldRefresh(since: cached?.storedAt, policy: policy)
 
         if !needsRefresh, let cachedLists = cached?.value {
@@ -39,7 +43,7 @@ actor TasksRepository {
 
         do {
             let freshLists = try await service.listTaskLists(accessToken: accessToken)
-            cache.saveTaskLists(freshLists)
+            await cache.saveTaskLists(freshLists)
             return freshLists
         } catch {
             if let cachedLists = cached?.value, !cachedLists.isEmpty {
@@ -50,7 +54,7 @@ actor TasksRepository {
     }
 
     func loadTasks(accessToken: String, listId: String, policy: RefreshPolicy) async throws -> [TaskItem] {
-        let cached = cache.cachedTasks(for: listId)
+        let cached = await cache.cachedTasks(for: listId)
         let needsRefresh = shouldRefresh(since: cached?.storedAt, policy: policy)
 
         if !needsRefresh, let cachedTasks = cached?.value {
@@ -59,7 +63,7 @@ actor TasksRepository {
 
         do {
             let freshTasks = try await service.listTasks(accessToken: accessToken, tasklistId: listId)
-            cache.saveTasks(freshTasks, for: listId)
+            await cache.saveTasks(freshTasks, for: listId)
             return freshTasks
         } catch {
             if let cachedTasks = cached?.value {
@@ -69,12 +73,42 @@ actor TasksRepository {
         }
     }
 
-    func markTasksDirty(for listId: String) {
-        cache.invalidateTasks(for: listId)
+    func markTasksDirty(for listId: String) async {
+    await cache.invalidateTasks(for: listId)
     }
 
-    func clearAll() {
-        cache.invalidateAll()
+    func clearAll() async {
+    await cache.invalidateAll()
+    }
+
+    func updateTaskStatus(accessToken: String, listId: String, taskId: String, isCompleted: Bool) async throws -> [TaskItem] {
+        let updated = try await service.updateTaskStatus(accessToken: accessToken, tasklistId: listId, taskId: taskId, isCompleted: isCompleted)
+    var current = (await cache.cachedTasks(for: listId))?.value ?? []
+
+        if let index = current.firstIndex(where: { $0.id == updated.id }) {
+            current[index] = updated
+        } else {
+            current.insert(updated, at: 0)
+        }
+
+    await cache.saveTasks(current, for: listId)
+        return current
+    }
+
+    func deleteTask(accessToken: String, listId: String, taskId: String) async throws -> [TaskItem] {
+        try await service.deleteTask(accessToken: accessToken, tasklistId: listId, taskId: taskId)
+    var current = (await cache.cachedTasks(for: listId))?.value ?? []
+        current.removeAll { $0.id == taskId }
+    await cache.saveTasks(current, for: listId)
+        return current
+    }
+
+    func createTask(accessToken: String, listId: String, title: String) async throws -> [TaskItem] {
+        let newTask = try await service.createTask(accessToken: accessToken, tasklistId: listId, title: title)
+    var current = (await cache.cachedTasks(for: listId))?.value ?? []
+        current.insert(newTask, at: 0)
+        await cache.saveTasks(current, for: listId)
+        return current
     }
 
 
