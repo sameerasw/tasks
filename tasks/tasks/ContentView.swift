@@ -6,16 +6,20 @@
 //
 
 import SwiftUI
+import Combine
 
 struct ContentView: View {
     @EnvironmentObject var auth: AuthenticationManager
+    let repository: TasksRepository
+
     @State private var taskLists: [TaskList] = []
-    @State private var tasks: [TaskItem] = []
     @State private var loading = false
-    private let tasksService = TasksService()
     @State private var alertMessage: String = ""
     @State private var showingAlert: Bool = false
     @State private var debugInfo: String = ""
+    @State private var hasLoadedOnce = false
+    @State private var refreshTimer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
+    @State private var refreshInProgress = false
 
     var body: some View {
         VStack(spacing: 16) {
@@ -24,33 +28,34 @@ struct ContentView: View {
                 .frame(width: 64, height: 64)
                 .foregroundColor(.accentColor)
 
-                if loading {
-                    ProgressView()
-                }
-            if taskLists.isEmpty {
-                    Text("No task lists loaded")
-                        .foregroundColor(.secondary)
-                } else {
-                    TabView {
-                        ForEach(taskLists) { list in
-                            TaskListTab(list: list, tasksService: tasksService, auth: auth, alertMessage: $alertMessage, showingAlert: $showingAlert)
-                                .tabItem {
-                                    Text(list.title ?? "(no title)")
-                                }
-                                .tag(list.id)
-                        }
-                    }
-                    .tabViewStyle(.automatic)
-                    .frame(minHeight: 240)
-                }
+            if loading {
+                ProgressView()
+            }
 
-                if !debugInfo.isEmpty {
-                    Divider()
-                    Text("Debug")
-                        .font(.headline)
-                    Text(debugInfo)
-                        .font(.system(.body, design: .monospaced))
-                        .padding()
+            if taskLists.isEmpty {
+                Text("No task lists loaded")
+                    .foregroundColor(.secondary)
+            } else {
+                TabView {
+                    ForEach(taskLists) { list in
+                        TaskListTab(list: list, repository: repository, auth: auth, alertMessage: $alertMessage, showingAlert: $showingAlert)
+                            .tabItem {
+                                Text(list.title ?? "(no title)")
+                            }
+                            .tag(list.id)
+                    }
+                }
+                .tabViewStyle(.automatic)
+                .frame(minHeight: 240)
+            }
+
+            if !debugInfo.isEmpty {
+                Divider()
+                Text("Debug")
+                    .font(.headline)
+                Text(debugInfo)
+                    .font(.system(.body, design: .monospaced))
+                    .padding()
             } else {
                 Text("Not signed in")
                     .foregroundColor(.secondary)
@@ -93,25 +98,33 @@ struct ContentView: View {
         }, message: {
             Text(alertMessage)
         })
+        .task {
+            guard !hasLoadedOnce else { return }
+            await MainActor.run { hasLoadedOnce = true }
+            await loadCachedTaskLists()
+            await refreshTaskLists(policy: .startup)
+        }
+        .onReceive(refreshTimer) { _ in
+            Task {
+                await refreshIfNeededForTimer()
+            }
+        }
+        .onChange(of: auth.isSignedIn) { signedIn in
+            if signedIn {
+                Task {
+                    await loadCachedTaskLists()
+                    await refreshTaskLists(policy: .startup)
+                }
+            } else {
+                taskLists = []
+            }
+        }
     }
 
     private func loadTaskLists() {
         Task {
-            loading = true
-            do {
-                let token = try await auth.getValidAccessToken()
-                let lists = try await tasksService.listTaskLists(accessToken: token)
-                DispatchQueue.main.async {
-                    self.taskLists = lists
-                    self.loading = false
-                }
-            } catch {
-                let msg = "Failed to load task lists: \(error)"
-                print(msg)
-                loading = false
-                alertMessage = msg
-                showingAlert = true
-            }
+            await MainActor.run { loading = true }
+            await refreshTaskLists(policy: .force)
         }
     }
 
@@ -139,11 +152,93 @@ struct ContentView: View {
     private func signOut() {
         auth.signOut()
         taskLists = []
-        tasks = []
+        Task {
+            await repository.clearAll()
+        }
+    }
+
+    private func loadCachedTaskLists() async {
+        let cached = await repository.cachedTaskLists()
+        await MainActor.run {
+            self.taskLists = cached
+        }
+    }
+
+    private func refreshTaskLists(policy: RefreshPolicy) async {
+        await MainActor.run { refreshInProgress = true }
+        let signedIn = await MainActor.run { auth.isSignedIn }
+        guard signedIn else {
+            await MainActor.run {
+                loading = false
+                refreshInProgress = false
+            }
+            return
+        }
+
+        do {
+            let previousStamp = await repository.lastTaskListRefreshDate()
+            let token = try await auth.getValidAccessToken()
+            let lists = try await repository.loadTaskLists(accessToken: token, policy: policy)
+            let latestStamp = await repository.lastTaskListRefreshDate()
+            let didRefresh = latestStamp != previousStamp || previousStamp == nil
+
+            await MainActor.run {
+                self.taskLists = lists
+                self.loading = false
+                self.refreshInProgress = false
+            }
+
+            if didRefresh || policy == .startup || policy == .force {
+                let repo = repository
+                Task.detached(priority: .background) {
+                    for list in lists {
+                        do {
+                            _ = try await repo.loadTasks(accessToken: token, listId: list.id, policy: .startup)
+                        } catch {
+                            print("[Cache] failed to warm tasks for list \(list.id): \(error)")
+                        }
+                    }
+                }
+            }
+        } catch {
+            let message = "Failed to load task lists: \(error)"
+            print(message)
+            await MainActor.run {
+                loading = false
+                alertMessage = message
+                showingAlert = true
+                refreshInProgress = false
+            }
+        }
+    }
+
+    private func refreshIfNeededForTimer() async {
+        let signedIn = await MainActor.run { auth.isSignedIn }
+        guard signedIn else { return }
+
+        let currentlyLoading = await MainActor.run { loading }
+        guard !currentlyLoading else { return }
+
+        let running = await MainActor.run { refreshInProgress }
+        guard !running else { return }
+
+        let lastRefresh = await repository.lastTaskListRefreshDate()
+        let interval = await repository.refreshInterval
+
+        let shouldRefresh: Bool
+        if let lastRefresh {
+            shouldRefresh = Date().timeIntervalSince(lastRefresh) >= interval
+        } else {
+            shouldRefresh = true
+        }
+
+        guard shouldRefresh else { return }
+
+        await refreshTaskLists(policy: .staleOnly)
     }
 }
 
 #Preview {
-    ContentView()
+    ContentView(repository: TasksRepository())
         .environmentObject(AuthenticationManager())
 }
