@@ -2,6 +2,11 @@
 
 Google tasks for macOS
 
+
+<img width="1892" height="1214" alt="CleanShot 2025-10-15 at 12  23 38@2x" src="https://github.com/user-attachments/assets/172dffc3-fcee-4b40-a26b-51a617102893" />
+
+![Screen Recording 2025-10-14 at 11 07 45 PM](https://github.com/user-attachments/assets/656c742c-64d2-4ea9-a065-be85c560e1a8)
+
 ## Authentication setup
 
 This project includes a simple OAuth authentication flow for Google using
