@@ -43,8 +43,10 @@ enum TasksServiceError: Error {
     case decoding(Error)
 }
 
-final class TasksService {
+final class TasksService: @unchecked Sendable {
     private let base = "https://tasks.googleapis.com/tasks/v1"
+
+    init() {}
 
     func listTaskLists(accessToken: String) async throws -> [TaskList] {
         let urlStr = "https://tasks.googleapis.com/tasks/v1/users/@me/lists"

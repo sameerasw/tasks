@@ -37,22 +37,23 @@ actor TasksCache {
         }
     }
 
-    func cachedTaskLists() -> CachedValue<[TaskList]>? {
-        loadValue(from: Constants.taskListsFile)
+
+    func cachedTaskLists() async -> CachedValue<[TaskList]>? {
+        await loadValue(from: Constants.taskListsFile)
     }
 
-    func saveTaskLists(_ lists: [TaskList]) {
+    func saveTaskLists(_ lists: [TaskList]) async {
         let payload = CachedValue(storedAt: Date(), value: lists)
-        storeValue(payload, to: Constants.taskListsFile)
+        await storeValue(payload, to: Constants.taskListsFile)
     }
 
-    func cachedTasks(for listId: String) -> CachedValue<[TaskItem]>? {
-        loadValue(from: tasksFileName(for: listId))
+    func cachedTasks(for listId: String) async -> CachedValue<[TaskItem]>? {
+        await loadValue(from: tasksFileName(for: listId))
     }
 
-    func saveTasks(_ tasks: [TaskItem], for listId: String) {
+    func saveTasks(_ tasks: [TaskItem], for listId: String) async {
         let payload = CachedValue(storedAt: Date(), value: tasks)
-        storeValue(payload, to: tasksFileName(for: listId))
+        await storeValue(payload, to: tasksFileName(for: listId))
     }
 
     func invalidateTasks(for listId: String) {
@@ -67,17 +68,37 @@ actor TasksCache {
         }
     }
 
-    private func loadValue<T: Codable>(from fileName: String) -> CachedValue<T>? {
+
+    private func loadValue<T: Codable>(from fileName: String) async -> CachedValue<T>? {
         let url = directoryURL.appendingPathComponent(fileName)
         guard fileManager.fileExists(atPath: url.path) else { return nil }
         guard let data = try? Data(contentsOf: url) else { return nil }
-        return try? decoder.decode(CachedValue<T>.self, from: data)
+
+        return await MainActor.run {
+            do {
+                return try self.decoder.decode(CachedValue<T>.self, from: data)
+            } catch {
+                print("Decoding error: \(error)")
+                return nil
+            }
+        }
     }
 
-    private func storeValue<T: Codable>(_ value: CachedValue<T>, to fileName: String) {
+    private func storeValue<T: Codable>(_ value: CachedValue<T>, to fileName: String) async {
         let url = directoryURL.appendingPathComponent(fileName)
-        guard let data = try? encoder.encode(value) else { return }
-        try? data.write(to: url, options: [.atomic])
+
+        let data: Data? = await MainActor.run {
+            do {
+                return try self.encoder.encode(value)
+            } catch {
+                print("Encoding error: \(error)")
+                return nil
+            }
+        }
+
+        guard let data else { return }
+
+        try? data.write(to: url, options: .atomic)
     }
 
     private func tasksFileName(for listId: String) -> String {

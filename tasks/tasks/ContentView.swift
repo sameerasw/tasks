@@ -259,7 +259,7 @@ struct ContentView: View {
         guard !running else { return }
 
         let lastRefresh = await repository.lastTaskListRefreshDate()
-        let interval = await repository.refreshInterval
+        let interval = repository.refreshInterval
 
         let shouldRefresh: Bool
         if let lastRefresh {
