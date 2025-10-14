@@ -8,6 +8,7 @@ struct TaskListTab: View {
     @Binding var showingAlert: Bool
     @StateObject private var vm: TaskListViewModel
     @State private var hasLoadedOnce = false
+    @State private var visibleTaskIDs: Set<String> = []
 
     init(list: TaskList, repository: TasksRepository, auth: AuthenticationManager, alertMessage: Binding<String>, showingAlert: Binding<Bool>) {
         self.list = list
@@ -25,7 +26,11 @@ struct TaskListTab: View {
                 if vm.tasks.isEmpty {
                     Text("No tasks loaded").foregroundColor(.secondary)
                 } else {
-                    ForEach(vm.tasks) { task in
+                    ForEach(Array(vm.tasks.enumerated()), id: \.element.id) { pair in
+                        let index = pair.offset
+                        let task = pair.element
+                        let isVisible = visibleTaskIDs.contains(task.id)
+
                         TaskCard(task: task)
                             .swipeActions(edge: .leading, allowsFullSwipe: true) {
                                 CompletionActionView(isCompleted: task.status == "completed") { toggleCompletion(for: task) }
@@ -35,6 +40,10 @@ struct TaskListTab: View {
                             }
                             .contextMenu { Button(role: .destructive) { deleteTask(task) } label: { Label("Delete Task", systemImage: "trash") } }
                             .listRowBackground(Color.clear)
+                            .opacity(isVisible ? 1 : 0)
+                            .scaleEffect(isVisible ? 1 : 0.98)
+                            .offset(x: isVisible ? 0 : 30)
+                            .animation(.interactiveSpring(response: 0.45, dampingFraction: 0.75, blendDuration: 0.1).delay(Double(index) * 0.015), value: isVisible)
                     }
                 }
             }
@@ -44,11 +53,27 @@ struct TaskListTab: View {
             Task { await loadTasks(policy: hasLoadedOnce ? .staleOnly : .startup) }
             Task { @MainActor in await Task.yield(); hasLoadedOnce = true }
         }
+        .onChange(of: vm.tasks.count) { _, _ in
+            visibleTaskIDs.removeAll()
+            Task { @MainActor in try? await Task.sleep(nanoseconds: 120_000_000); staggerInRows() }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .taskListDidChange)) { notification in
             guard let updatedListId = notification.object as? String, updatedListId == list.id else { return }
             Task { await vm.loadCachedTasks(for: list.id) }
         }
     }
+
+    private func staggerInRows() {
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 40_000_000)
+            for (i, task) in vm.tasks.enumerated() {
+                // stagger each row
+                try? await Task.sleep(nanoseconds: UInt64(40_000_000 * i))
+                withAnimation { _ = visibleTaskIDs.insert(task.id) }
+            }
+        }
+    }
+
 
     private func loadTasks(policy: RefreshPolicy) async {
         do {
