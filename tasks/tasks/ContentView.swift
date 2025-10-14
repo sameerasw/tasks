@@ -21,12 +21,12 @@ struct ContentView: View {
     }
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(alignment: .center, spacing: 16) {
 
             if viewModel.loading { ProgressView() }
 
             if viewModel.taskLists.isEmpty {
-                Text("No task lists loaded")
+                Text("└(=^‥^=)┐")
                     .foregroundColor(.secondary)
             } else {
                 TaskListsView(viewModel: viewModel)
