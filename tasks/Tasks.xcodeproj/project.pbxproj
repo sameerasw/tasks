@@ -7,12 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B9D41FC72E9ECA7B001D0B68 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = B9D41FC62E9ECA7B001D0B68 /* AppIcon.icon */; };
 		B9DBC7FD2E9962D70060094C /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = B9DBC7FC2E9962D70060094C /* GoogleSignIn */; };
 		B9DBC7FF2E9962D70060094C /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = B9DBC7FE2E9962D70060094C /* GoogleSignInSwift */; };
 		B9DBC8242E996E080060094C /* Secrets.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = B9DBC8232E996E050060094C /* Secrets.xcconfig */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		B9D41FC62E9ECA7B001D0B68 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		B9DBC7ED2E9961C10060094C /* Tasks.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Tasks.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B9DBC8232E996E050060094C /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -57,6 +59,7 @@
 				B9DBC8232E996E050060094C /* Secrets.xcconfig */,
 				B9DBC7EF2E9961C10060094C /* tasks */,
 				B9DBC7EE2E9961C10060094C /* Products */,
+				B9D41FC62E9ECA7B001D0B68 /* AppIcon.icon */,
 			);
 			sourceTree = "<group>";
 		};
@@ -138,6 +141,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B9DBC8242E996E080060094C /* Secrets.xcconfig in Resources */,
+				B9D41FC72E9ECA7B001D0B68 /* AppIcon.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -302,6 +306,7 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = tasks/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Tasks;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -347,6 +352,7 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = tasks/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Tasks;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
