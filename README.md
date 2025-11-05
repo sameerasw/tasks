@@ -2,6 +2,7 @@
 
 Google tasks for macOS
 
+![tasks](https://github.com/user-attachments/assets/2ba5ca6e-078d-4328-96a5-e8b9455062b8)
 
 <img width="1892" height="1214" alt="CleanShot 2025-10-15 at 12  23 38@2x" src="https://github.com/user-attachments/assets/172dffc3-fcee-4b40-a26b-51a617102893" />
 
