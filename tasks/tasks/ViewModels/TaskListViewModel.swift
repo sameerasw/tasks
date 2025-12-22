@@ -46,4 +46,11 @@ final class TaskListViewModel: ObservableObject {
         let token = try await auth.getValidAccessToken()
         return try await repository.getTask(accessToken: token, listId: listId, taskId: taskId)
     }
+
+    func updateTask(_ task: TaskItem, listId: String, auth: AuthenticationManager) async throws -> TaskItem {
+        let token = try await auth.getValidAccessToken()
+        let updated = try await repository.updateTask(accessToken: token, listId: listId, task: task)
+        NotificationCenter.default.post(name: .taskListDidChange, object: listId)
+        return updated
+    }
 }

@@ -78,13 +78,18 @@ final class ContentViewModel: ObservableObject {
         }
     }
 
-    func createTask(title: String, auth: AuthenticationManager) async {
+    func createTask(title: String, notes: String? = nil, due: Date? = nil, auth: AuthenticationManager) async {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, let listId = selectedListId else { return }
 
         do {
             let token = try await auth.getValidAccessToken()
-            _ = try await repository.createTask(accessToken: token, listId: listId, title: trimmed)
+            
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withInternetDateTime]
+            let dueStr = due.map { formatter.string(from: $0) }
+            
+            _ = try await repository.createTask(accessToken: token, listId: listId, title: trimmed, notes: notes, due: dueStr)
             NotificationCenter.default.post(name: .taskListDidChange, object: listId)
         } catch {
             Task { @MainActor in await Task.yield(); alertMessage = "Failed to create task: \(error)"; hasError = true }

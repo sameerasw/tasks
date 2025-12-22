@@ -119,8 +119,8 @@ final class TasksRepository {
         return current
     }
 
-    func createTask(accessToken: String, listId: String, title: String) async throws -> [TaskItem] {
-        let newTask = try await service.createTask(accessToken: accessToken, tasklistId: listId, title: title)
+    func createTask(accessToken: String, listId: String, title: String, notes: String? = nil, due: String? = nil) async throws -> [TaskItem] {
+        let newTask = try await service.createTask(accessToken: accessToken, tasklistId: listId, title: title, notes: notes, due: due)
 
         let cached = await cache.cachedTasks(for: listId)
         var current = await cachedValue_getValue(cached) ?? []
@@ -134,6 +134,10 @@ final class TasksRepository {
         return try await service.getTask(accessToken: accessToken, tasklistId: listId, taskId: taskId)
     }
 
+
+    public func updateTask(accessToken: String, listId: String, task: TaskItem) async throws -> TaskItem {
+        return try await service.updateTask(accessToken: accessToken, listId: listId, task: task)
+    }
 
     private func shouldRefresh(since date: Date?, policy: RefreshPolicy) -> Bool {
         switch policy {

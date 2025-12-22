@@ -59,13 +59,15 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $showingNewTaskSheet) {
-            NewTaskSheet(title: $newTaskTitle, isFocused: $newTaskFieldFocused, onCreate: { title in
-                Task { await viewModel.createTask(title: title, auth: auth); showingNewTaskSheet = false; newTaskTitle = "" }
+            NewTaskSheet(isFocused: $newTaskFieldFocused, onCreate: { title, notes, due in
+                Task { 
+                    await viewModel.createTask(title: title, notes: notes, due: due, auth: auth)
+                    showingNewTaskSheet = false 
+                }
             }, onCancel: {
                 showingNewTaskSheet = false
-                newTaskTitle = ""
             })
-            .onDisappear { newTaskTitle = ""; newTaskFieldFocused = false }
+            .onDisappear { newTaskFieldFocused = false }
         }
         .sheet(isPresented: $showingSignInSheet) {
             SignInView()

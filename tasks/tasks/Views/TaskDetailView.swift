@@ -9,6 +9,14 @@ struct TaskDetailView: View {
 
     @State private var isLoading = false
     @State private var errorMessage: String?
+    @State private var isEditing = false
+    
+    // Draft states for editing
+    @State private var draftTitle = ""
+    @State private var draftNotes = ""
+    @State private var draftDue: Date? = nil
+    @State private var draftStatus = ""
+    @State private var isSaving = false
 
     init(task: TaskItem, listId: String, viewModel: TaskListViewModel, auth: AuthenticationManager) {
         _taskItem = State(initialValue: task)
@@ -40,48 +48,182 @@ struct TaskDetailView: View {
                 } else {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 24) {
-                            headerSection
-                            
-                            VStack(spacing: 16) {
-                                if let updated = taskItem.updated, let date = ISO8601DateFormatter().date(from: updated) {
-                                    detailSection(title: "Last Updated", content: date.formatted(date: .long, time: .shortened), icon: "arrow.clockwise.circle")
-                                }
-
-                                if let notes = taskItem.notes, !notes.isEmpty {
-                                    detailSection(title: "Notes", content: notes, icon: "note.text")
-                                }
-                                
-                                if let due = taskItem.due, let date = ISO8601DateFormatter().date(from: due) {
-                                    detailSection(title: "Due Date", content: date.formatted(date: .long, time: .omitted), icon: "calendar")
-                                }
-                                
-                                if let completed = taskItem.completed, let date = ISO8601DateFormatter().date(from: completed) {
-                                    detailSection(title: "Completed", content: date.formatted(date: .long, time: .shortened), icon: "checkmark.circle.fill", color: .green)
-                                }
-                                
-                                statusSection
-                                flagsSection
-                                linksSection
-                                assignmentSection
-                                webLinkSection
+                            if isEditing {
+                                editForm
+                            } else {
+                                displayContent
                             }
                         }
                         .padding(24)
                     }
                     .padding(0)
+                    .disabled(isSaving)
                 }
             }
-            .navigationTitle("Task Details")
+            .navigationTitle(isEditing ? "Edit Task" : "Task Details")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
+                    if isEditing {
+                        Button("Save") {
+                            Task { await saveChanges() }
+                        }
+                        .disabled(isSaving || draftTitle.trimmingCharacters(in: .whitespaces).isEmpty)
                         .buttonStyle(.glassProminent)
+                    } else {
+                        Button("Done") { dismiss() }
+                            .buttonStyle(.glassProminent)
+                    }
+                }
+                
+                ToolbarItem(placement: .cancellationAction) {
+                    if isEditing {
+                        Button("Cancel") {
+                            cancelEditing()
+                        }
+                    } else {
+                        Button("Edit") {
+                            startEditing()
+                        }
+                    }
                 }
             }
             .onAppear {
                 Task { await fetchDetails() }
             }
         .frame(minWidth: 450, minHeight: 600)
+    }
+
+    private var displayContent: some View {
+        VStack(alignment: .leading, spacing: 24) {
+            headerSection
+            
+            VStack(spacing: 16) {
+                if let updated = taskItem.updated, let date = ISO8601DateFormatter().date(from: updated) {
+                    detailSection(title: "Last Updated", content: date.formatted(date: .long, time: .shortened), icon: "arrow.clockwise.circle")
+                }
+
+                if let notes = taskItem.notes, !notes.isEmpty {
+                    detailSection(title: "Notes", content: notes, icon: "note.text")
+                }
+                
+                if let due = taskItem.due, let date = ISO8601DateFormatter().date(from: due) {
+                    detailSection(title: "Due Date", content: date.formatted(date: .long, time: .omitted), icon: "calendar")
+                }
+                
+                if let completed = taskItem.completed, let date = ISO8601DateFormatter().date(from: completed) {
+                    detailSection(title: "Completed", content: date.formatted(date: .long, time: .shortened), icon: "checkmark.circle.fill", color: .green)
+                }
+                
+                statusSection
+                flagsSection
+                linksSection
+                assignmentSection
+                webLinkSection
+            }
+        }
+    }
+
+    private var editForm: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Title").font(.caption).foregroundColor(.secondary)
+                TextField("Task Title", text: $draftTitle)
+                    .textFieldStyle(.plain)
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .padding(10)
+                    .background(Color.secondary.opacity(0.1))
+                    .cornerRadius(8)
+            }
+            
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Notes").font(.caption).foregroundColor(.secondary)
+                TextEditor(text: $draftNotes)
+                    .frame(minHeight: 100)
+                    .padding(8)
+                    .background(Color.secondary.opacity(0.1))
+                    .cornerRadius(8)
+            }
+            
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("Due Date").font(.caption).foregroundColor(.secondary)
+                    Spacer()
+                    if draftDue != nil {
+                        Button("Clear") { draftDue = nil }
+                            .font(.caption)
+                    }
+                }
+                
+                DatePicker("Pick a date", selection: Binding(get: { draftDue ?? Date() }, set: { draftDue = $0 }), displayedComponents: .date)
+                    .labelsHidden()
+            }
+            
+            VStack(alignment: .leading, spacing: 8) {
+                Toggle(isOn: Binding(get: { draftStatus == "completed" }, set: { draftStatus = $0 ? "completed" : "needsAction" })) {
+                    Text("Mark as Completed")
+                }
+                .toggleStyle(.checkbox)
+            }
+        }
+    }
+
+    private func startEditing() {
+        draftTitle = taskItem.title ?? ""
+        draftNotes = taskItem.notes ?? ""
+        if let due = taskItem.due {
+            draftDue = ISO8601DateFormatter().date(from: due)
+        } else {
+            draftDue = nil
+        }
+        draftStatus = taskItem.status ?? "needsAction"
+        isEditing = true
+    }
+
+    private func cancelEditing() {
+        isEditing = false
+    }
+
+    private func saveChanges() async {
+        isSaving = true
+        errorMessage = nil
+        
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        let dueStr = draftDue.map { formatter.string(from: $0) }
+        
+        let updatedTask = TaskItem(
+            id: taskItem.id,
+            title: draftTitle,
+            notes: draftNotes,
+            status: draftStatus,
+            due: dueStr,
+            completed: taskItem.completed, // usually set by API
+            updated: nil, // set by API
+            deleted: taskItem.deleted,
+            hidden: taskItem.hidden,
+            links: taskItem.links,
+            webViewLink: taskItem.webViewLink,
+            parent: taskItem.parent,
+            position: taskItem.position,
+            selfLink: taskItem.selfLink,
+            etag: taskItem.etag,
+            assignmentInfo: taskItem.assignmentInfo
+        )
+        
+        do {
+            let result = try await viewModel.updateTask(updatedTask, listId: listId, auth: auth)
+            await MainActor.run {
+                self.taskItem = result
+                self.isEditing = false
+                self.isSaving = false
+            }
+        } catch {
+            await MainActor.run {
+                self.errorMessage = "Failed to save changes: \(error.localizedDescription)"
+                self.isSaving = false
+            }
+        }
     }
 
     private var flagsSection: some View {

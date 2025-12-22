@@ -125,7 +125,7 @@ final class TasksService: @unchecked Sendable {
         catch { throw TasksServiceError.network(error) }
     }
 
-    func createTask(accessToken: String, tasklistId: String, title: String) async throws -> TaskItem {
+    func createTask(accessToken: String, tasklistId: String, title: String, notes: String? = nil, due: String? = nil) async throws -> TaskItem {
         let urlStr = "https://tasks.googleapis.com/tasks/v1/lists/\(tasklistId)/tasks"
         guard let url = URL(string: urlStr) else { throw TasksServiceError.network(NSError(domain: "", code: -1)) }
 
@@ -134,13 +134,48 @@ final class TasksService: @unchecked Sendable {
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        let payload: [String: Any] = [
+        var payload: [String: Any] = [
             "title": title
         ]
+        
+        if let notes = notes {
+            payload["notes"] = notes
+        }
+        
+        if let due = due {
+            payload["due"] = due
+        }
 
         request.httpBody = try JSONSerialization.data(withJSONObject: payload, options: [])
 
         return try await performTaskMutation(request: request)
+    }
+
+    func updateTask(accessToken: String, listId: String, task: TaskItem) async throws -> TaskItem {
+        let urlStr = "https://tasks.googleapis.com/tasks/v1/lists/\(listId)/tasks/\(task.id)"
+        guard let url = URL(string: urlStr) else { throw TasksServiceError.network(NSError(domain: "", code: -1)) }
+        var req = URLRequest(url: url)
+        req.httpMethod = "PUT"
+        req.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        do {
+            let bodyData = try JSONEncoder().encode(task)
+            req.httpBody = bodyData
+
+            let (data, resp) = try await URLSession.shared.data(for: req)
+            guard let httpResp = resp as? HTTPURLResponse else { throw TasksServiceError.network(NSError(domain: "", code: -1)) }
+            if httpResp.statusCode == 401 { throw TasksServiceError.unauthorized }
+
+            if let top = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any], let errObj = top["error"] as? [String: Any] {
+                let msg = errObj["message"] as? String ?? "API error"
+                throw TasksServiceError.apiError(msg)
+            }
+
+            return try JSONDecoder().decode(TaskItem.self, from: data)
+        } catch let err as TasksServiceError { throw err }
+        catch let err as DecodingError { throw TasksServiceError.decoding(err) }
+        catch { throw TasksServiceError.network(error) }
     }
 
     private func performTaskMutation(request: URLRequest) async throws -> TaskItem {
