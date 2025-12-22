@@ -9,6 +9,7 @@ struct TaskListTab: View {
     @StateObject private var vm: TaskListViewModel
     @State private var hasLoadedOnce = false
     @State private var visibleTaskIDs: Set<String> = []
+    @State private var selectedTask: TaskItem?
 
     init(list: TaskList, repository: TasksRepository, auth: AuthenticationManager, alertMessage: Binding<String>, showingAlert: Binding<Bool>) {
         self.list = list
@@ -32,6 +33,10 @@ struct TaskListTab: View {
                         let isVisible = visibleTaskIDs.contains(task.id)
 
                         TaskCard(task: task)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                selectedTask = task
+                            }
                             .swipeActions(edge: .leading, allowsFullSwipe: true) {
                                 CompletionActionView(isCompleted: task.status == "completed") { toggleCompletion(for: task) }
                             }
@@ -48,6 +53,9 @@ struct TaskListTab: View {
                 }
             }
             .listStyle(.sidebar)
+        }
+        .sheet(item: $selectedTask) { task in
+            TaskDetailView(task: task, listId: list.id, viewModel: vm, auth: auth)
         }
         .onAppear {
             Task { await loadTasks(policy: hasLoadedOnce ? .staleOnly : .startup) }

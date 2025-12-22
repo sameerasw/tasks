@@ -130,6 +130,10 @@ final class TasksRepository {
         return current
     }
 
+    public func getTask(accessToken: String, listId: String, taskId: String) async throws -> TaskItem {
+        return try await service.getTask(accessToken: accessToken, tasklistId: listId, taskId: taskId)
+    }
+
 
     private func shouldRefresh(since date: Date?, policy: RefreshPolicy) -> Bool {
         switch policy {

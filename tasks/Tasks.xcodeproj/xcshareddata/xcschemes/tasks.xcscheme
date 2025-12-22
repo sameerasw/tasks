@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "2600"
+   LastUpgradeVersion = "2620"
    version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -18,7 +18,7 @@
                BlueprintIdentifier = "B9DBC7EC2E9961C10060094C"
                BuildableName = "Tasks.app"
                BlueprintName = "Tasks"
-               ReferencedContainer = "container:tasks.xcodeproj">
+               ReferencedContainer = "container:Tasks.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -47,7 +47,7 @@
             BlueprintIdentifier = "B9DBC7EC2E9961C10060094C"
             BuildableName = "Tasks.app"
             BlueprintName = "Tasks"
-            ReferencedContainer = "container:tasks.xcodeproj">
+            ReferencedContainer = "container:Tasks.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <EnvironmentVariables>
@@ -71,7 +71,7 @@
             BlueprintIdentifier = "B9DBC7EC2E9961C10060094C"
             BuildableName = "Tasks.app"
             BlueprintName = "Tasks"
-            ReferencedContainer = "container:tasks.xcodeproj">
+            ReferencedContainer = "container:Tasks.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
