@@ -25,7 +25,7 @@ struct TaskListTab: View {
 
             List {
                 if vm.tasks.isEmpty {
-                    Text("No tasks loaded").foregroundColor(.secondary)
+                    Text("ʅ(°_°)ʃ  Nothing to see here").foregroundColor(.secondary)
                 } else {
                     ForEach(Array(vm.tasks.enumerated()), id: \.element.id) { pair in
                         let index = pair.offset

@@ -19,7 +19,13 @@ struct AppToolbar: ToolbarContent {
                 .help("View error details")
             }
 
-            Button { Task { viewModel.loading = true; await viewModel.refreshTaskLists(policy: .force, auth: auth) } } label: { Label("Load Task Lists", systemImage: "repeat") }
+            if viewModel.loading {
+                ProgressView()
+                    .controlSize(.small)
+                    .padding(.horizontal, 8)
+            } else {
+                Button { Task { viewModel.loading = true; await viewModel.refreshTaskLists(policy: .force, auth: auth) } } label: { Label("Load Task Lists", systemImage: "repeat") }
+            }
 
             Button { showingNewTaskSheet = true } label: { Label("New Task", systemImage: "plus") }
                 .disabled(viewModel.selectedListId == nil || !auth.isSignedIn)

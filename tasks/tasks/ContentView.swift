@@ -25,7 +25,6 @@ struct ContentView: View {
     var body: some View {
         VStack(alignment: .center, spacing: 16) {
 
-            if viewModel.loading { ProgressView() }
 
             if viewModel.taskLists.isEmpty {
                 Text("└(=^‥^=)┐")
