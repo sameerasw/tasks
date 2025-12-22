@@ -20,6 +20,7 @@ public struct TaskItem: Codable, Identifiable, Sendable {
     public let status: String?
     public let due: String?
     public let completed: String?
+    public let updated: String?
     public let deleted: Bool?
     public let hidden: Bool?
     public let links: [TaskLink]?
@@ -28,12 +29,29 @@ public struct TaskItem: Codable, Identifiable, Sendable {
     public let position: String?
     public let selfLink: String?
     public let etag: String?
+    public let assignmentInfo: AssignmentInfo?
 }
 
 public struct TaskLink: Codable, Sendable {
     public let type: String?
     public let description: String?
     public let link: String?
+}
+
+public struct AssignmentInfo: Codable, Sendable {
+    public let linkToTask: String?
+    public let surfaceType: String?
+    public let driveResourceInfo: DriveResourceInfo?
+    public let spaceInfo: SpaceInfo?
+}
+
+public struct DriveResourceInfo: Codable, Sendable {
+    public let driveFileId: String?
+    public let resourceKey: String?
+}
+
+public struct SpaceInfo: Codable, Sendable {
+    public let space: String?
 }
 
 public struct TaskListsResponse: Codable, Sendable {

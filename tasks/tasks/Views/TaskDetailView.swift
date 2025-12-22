@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct TaskDetailView: View {
-    @State private var task: TaskItem
+    @State private var taskItem: TaskItem
     let listId: String
     let viewModel: TaskListViewModel
     let auth: AuthenticationManager
@@ -11,7 +11,7 @@ struct TaskDetailView: View {
     @State private var errorMessage: String?
 
     init(task: TaskItem, listId: String, viewModel: TaskListViewModel, auth: AuthenticationManager) {
-        _task = State(initialValue: task)
+        _taskItem = State(initialValue: task)
         self.listId = listId
         self.viewModel = viewModel
         self.auth = auth
@@ -43,19 +43,27 @@ struct TaskDetailView: View {
                             headerSection
                             
                             VStack(spacing: 16) {
-                                if let notes = task.notes, !notes.isEmpty {
+                                if let updated = taskItem.updated, let date = ISO8601DateFormatter().date(from: updated) {
+                                    detailSection(title: "Last Updated", content: date.formatted(date: .long, time: .shortened), icon: "arrow.clockwise.circle")
+                                }
+
+                                if let notes = taskItem.notes, !notes.isEmpty {
                                     detailSection(title: "Notes", content: notes, icon: "note.text")
                                 }
                                 
-                                if let due = task.due, let date = ISO8601DateFormatter().date(from: due) {
+                                if let due = taskItem.due, let date = ISO8601DateFormatter().date(from: due) {
                                     detailSection(title: "Due Date", content: date.formatted(date: .long, time: .omitted), icon: "calendar")
                                 }
                                 
-                                if let completed = task.completed, let date = ISO8601DateFormatter().date(from: completed) {
+                                if let completed = taskItem.completed, let date = ISO8601DateFormatter().date(from: completed) {
                                     detailSection(title: "Completed", content: date.formatted(date: .long, time: .shortened), icon: "checkmark.circle.fill", color: .green)
                                 }
                                 
                                 statusSection
+                                flagsSection
+                                linksSection
+                                assignmentSection
+                                webLinkSection
                             }
                         }
                         .padding(24)
@@ -73,12 +81,129 @@ struct TaskDetailView: View {
             .onAppear {
                 Task { await fetchDetails() }
             }
-        .frame(minWidth: 450, minHeight: 500)
+        .frame(minWidth: 450, minHeight: 600)
+    }
+
+    private var flagsSection: some View {
+        Group {
+            if taskItem.deleted == true || taskItem.hidden == true {
+                HStack(spacing: 12) {
+                    if taskItem.deleted == true {
+                        Label("Deleted", systemImage: "trash.fill")
+                            .foregroundColor(.red)
+                    }
+                    if taskItem.hidden == true {
+                        Label("Hidden", systemImage: "eye.slash.fill")
+                            .foregroundColor(.secondary)
+                    }
+                    Spacer()
+                }
+                .font(.subheadline)
+                .padding()
+                .background(Color.secondary.opacity(0.05))
+                .cornerRadius(12)
+            }
+        }
+    }
+
+    private var linksSection: some View {
+        Group {
+            if let links = taskItem.links, !links.isEmpty {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Image(systemName: "link")
+                            .foregroundColor(.secondary)
+                        Text("Related Links")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .textCase(.uppercase)
+                    }
+                    
+                    ForEach(links.indices, id: \.self) { index in
+                        let item = links[index]
+                        if let urlStr = item.link, let url = URL(string: urlStr) {
+                            Link(destination: url) {
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(item.description ?? "Link")
+                                            .font(.body)
+                                        Text(item.type ?? "URL")
+                                            .font(.caption2)
+                                            .foregroundColor(.secondary)
+                                    }
+                                    Spacer()
+                                    Image(systemName: "arrow.up.right.square")
+                                        .font(.caption)
+                                }
+                                .padding(10)
+                                .background(Color.blue.opacity(0.1))
+                                .cornerRadius(8)
+                            }
+                        }
+                    }
+                }
+                .padding()
+                .background(Color.secondary.opacity(0.05))
+                .cornerRadius(12)
+            }
+        }
+    }
+
+    private var assignmentSection: some View {
+        Group {
+            if let info = taskItem.assignmentInfo {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Image(systemName: "person.badge.key")
+                            .foregroundColor(.secondary)
+                        Text("Assignment Info")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .textCase(.uppercase)
+                    }
+
+                    if let type = info.surfaceType {
+                        Text("From: \(type)")
+                            .font(.headline)
+                    }
+
+                    if let link = info.linkToTask, let url = URL(string: link) {
+                        Link(destination: url) {
+                            Label("Open Source Document", systemImage: "doc.fill")
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                }
+                .padding()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.orange.opacity(0.1))
+                .cornerRadius(12)
+            }
+        }
+    }
+
+    private var webLinkSection: some View {
+        Group {
+            if let webLink = taskItem.webViewLink, let url = URL(string: webLink) {
+                Link(destination: url) {
+                    HStack {
+                        Image(systemName: "safari")
+                        Text("Open in Google Tasks Web")
+                        Spacer()
+                        Image(systemName: "arrow.up.right")
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(Color.primary.opacity(0.05))
+                    .cornerRadius(12)
+                }
+            }
+        }
     }
 
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(task.title ?? "(No Title)")
+            Text(taskItem.title ?? "(No Title)")
                 .font(.title)
                 .fontWeight(.bold)
         }
@@ -86,9 +211,9 @@ struct TaskDetailView: View {
 
     private var statusSection: some View {
         HStack {
-            Label(task.status == "completed" ? "Completed" : "In Progress", 
-                  systemImage: task.status == "completed" ? "checkmark.circle.fill" : "circle")
-                .foregroundColor(task.status == "completed" ? .green : .orange)
+            Label(taskItem.status == "completed" ? "Completed" : "In Progress", 
+                  systemImage: taskItem.status == "completed" ? "checkmark.circle.fill" : "circle")
+                .foregroundColor(taskItem.status == "completed" ? .green : .orange)
                 .font(.headline)
             Spacer()
         }
@@ -122,9 +247,9 @@ struct TaskDetailView: View {
         isLoading = true
         errorMessage = nil
         do {
-            let updatedTask = try await viewModel.fetchTaskDetails(listId: listId, taskId: task.id, auth: auth)
+            let updatedTask = try await viewModel.fetchTaskDetails(listId: listId, taskId: taskItem.id, auth: auth)
             await MainActor.run {
-                self.task = updatedTask
+                self.taskItem = updatedTask
                 self.isLoading = false
             }
         } catch {
