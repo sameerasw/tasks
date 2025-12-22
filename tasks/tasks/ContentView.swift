@@ -37,7 +37,11 @@ struct ContentView: View {
         }
         .frame(minWidth: 320, minHeight: 240)
     .toolbar { AppToolbar(viewModel: viewModel, auth: auth, showingNewTaskSheet: $showingNewTaskSheet, showAuthInfo: showAuthInfo, signIn: signIn, signOut: signOut, showAbout: { showingAboutSheet = true }) }
-        .alert("Error", isPresented: $viewModel.showingAlert, actions: { Button("OK", role: .cancel) {} }, message: { Text(viewModel.alertMessage) })
+        .sheet(isPresented: $viewModel.hasError) {
+            ErrorDetailsView(message: viewModel.alertMessage) {
+                viewModel.hasError = false
+            }
+        }
         .task {
             guard !viewModel.hasLoadedOnce else { return }
             viewModel.markLoadedOnce()

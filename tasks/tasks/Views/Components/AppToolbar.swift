@@ -11,6 +11,14 @@ struct AppToolbar: ToolbarContent {
 
     var body: some ToolbarContent {
         ToolbarItemGroup {
+            if viewModel.hasError {
+                Button { viewModel.hasError = true /* This will trigger the sheet in ContentView */ } label: {
+                    Image(systemName: "exclamationmark.circle.fill")
+                        .foregroundColor(.red)
+                }
+                .help("View error details")
+            }
+
             Button { Task { viewModel.loading = true; await viewModel.refreshTaskLists(policy: .force, auth: auth) } } label: { Label("Load Task Lists", systemImage: "repeat") }
 
             Button { showingNewTaskSheet = true } label: { Label("New Task", systemImage: "plus") }

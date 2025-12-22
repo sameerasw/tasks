@@ -5,18 +5,18 @@ struct TaskListTab: View {
     let repository: TasksRepository
     @ObservedObject var auth: AuthenticationManager
     @Binding var alertMessage: String
-    @Binding var showingAlert: Bool
+    @Binding var hasError: Bool
     @StateObject private var vm: TaskListViewModel
     @State private var hasLoadedOnce = false
     @State private var visibleTaskIDs: Set<String> = []
     @State private var selectedTask: TaskItem?
 
-    init(list: TaskList, repository: TasksRepository, auth: AuthenticationManager, alertMessage: Binding<String>, showingAlert: Binding<Bool>) {
+    init(list: TaskList, repository: TasksRepository, auth: AuthenticationManager, alertMessage: Binding<String>, hasError: Binding<Bool>) {
         self.list = list
         self.repository = repository
         self.auth = auth
         self._alertMessage = alertMessage
-        self._showingAlert = showingAlert
+        self._hasError = hasError
         _vm = StateObject(wrappedValue: TaskListViewModel(repository: repository))
     }
 
@@ -87,7 +87,7 @@ struct TaskListTab: View {
         do {
             try await vm.loadTasks(for: list.id, policy: policy, auth: auth)
         } catch {
-            Task { @MainActor in await Task.yield(); alertMessage = "Failed to load tasks: \(error)"; showingAlert = true }
+            Task { @MainActor in await Task.yield(); alertMessage = "Failed to load tasks: \(error)"; hasError = true }
         }
     }
 
@@ -100,14 +100,14 @@ struct TaskListTab: View {
     private func toggleCompletion(for task: TaskItem) {
         Task {
             do { try await vm.updateStatus(for: task, listId: list.id, auth: auth) }
-            catch { Task { @MainActor in await Task.yield(); alertMessage = "Failed to update task: \(error)"; showingAlert = true } }
+            catch { Task { @MainActor in await Task.yield(); alertMessage = "Failed to update task: \(error)"; hasError = true } }
         }
     }
 
     private func deleteTask(_ task: TaskItem) {
         Task {
             do { try await vm.delete(task: task, listId: list.id, auth: auth) }
-            catch { Task { @MainActor in await Task.yield(); alertMessage = "Failed to delete task: \(error)"; showingAlert = true } }
+            catch { Task { @MainActor in await Task.yield(); alertMessage = "Failed to delete task: \(error)"; hasError = true } }
         }
     }
 }

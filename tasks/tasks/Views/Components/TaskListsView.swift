@@ -33,11 +33,11 @@ struct TaskListsView: View {
         } detail: {
             Group {
                 if let selectedId = viewModel.selectedListId, let list = viewModel.taskLists.first(where: { $0.id == selectedId }) {
-                    TaskListTab(list: list, repository: viewModel.repository, auth: auth, alertMessage: $viewModel.alertMessage, showingAlert: $viewModel.showingAlert)
+                    TaskListTab(list: list, repository: viewModel.repository, auth: auth, alertMessage: $viewModel.alertMessage, hasError: $viewModel.hasError)
                         .id(list.id)
                 } else if let first = viewModel.taskLists.first {
                     // fallback to first list when selection is nil
-                    TaskListTab(list: first, repository: viewModel.repository, auth: auth, alertMessage: $viewModel.alertMessage, showingAlert: $viewModel.showingAlert)
+                    TaskListTab(list: first, repository: viewModel.repository, auth: auth, alertMessage: $viewModel.alertMessage, hasError: $viewModel.hasError)
                         .id(first.id)
                 } else {
                     Text("No lists available").foregroundColor(.secondary)

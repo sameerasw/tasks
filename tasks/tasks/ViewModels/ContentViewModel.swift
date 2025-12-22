@@ -7,7 +7,7 @@ final class ContentViewModel: ObservableObject {
     @Published var selectedListId: String? = nil
     @Published var loading = false
     @Published var alertMessage: String = ""
-    @Published var showingAlert: Bool = false
+    @Published var hasError: Bool = false
     @Published var debugInfo: String = ""
     @Published var hasLoadedOnce = false
     @Published var refreshInProgress = false
@@ -72,7 +72,7 @@ final class ContentViewModel: ObservableObject {
                 await Task.yield()
                 loading = false
                 alertMessage = "Failed to load task lists: \(error)"
-                showingAlert = true
+                hasError = true
                 refreshInProgress = false
             }
         }
@@ -87,7 +87,7 @@ final class ContentViewModel: ObservableObject {
             _ = try await repository.createTask(accessToken: token, listId: listId, title: trimmed)
             NotificationCenter.default.post(name: .taskListDidChange, object: listId)
         } catch {
-            Task { @MainActor in await Task.yield(); alertMessage = "Failed to create task: \(error)"; showingAlert = true }
+            Task { @MainActor in await Task.yield(); alertMessage = "Failed to create task: \(error)"; hasError = true }
         }
     }
 
