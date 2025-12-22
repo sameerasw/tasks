@@ -57,3 +57,17 @@ public struct SpaceInfo: Codable, Sendable {
 public struct TaskListsResponse: Codable, Sendable {
     public let items: [TaskList]?
 }
+
+extension String {
+    public func toDate() -> Date? {
+        let formatter = ISO8601DateFormatter()
+        // Try with fractional seconds first
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = formatter.date(from: self) {
+            return date
+        }
+        // Fallback to standard internet date time
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter.date(from: self)
+    }
+}

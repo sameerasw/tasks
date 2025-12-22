@@ -23,7 +23,7 @@ struct TaskCard: View {
             }
 
             HStack {
-                if let due = task.due, let date = ISO8601DateFormatter().date(from: due) {
+                if let due = task.due, let date = due.toDate() {
                     Text(date, style: .date)
                         .font(.caption)
                         .foregroundColor(.secondary)

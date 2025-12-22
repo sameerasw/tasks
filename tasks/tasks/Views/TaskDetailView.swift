@@ -64,33 +64,46 @@ struct TaskDetailView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     if isEditing {
-                        Button("Save") {
+
+                        Button("Save", systemImage: "square.and.arrow.down"){
                             Task { await saveChanges() }
                         }
                         .disabled(isSaving || draftTitle.trimmingCharacters(in: .whitespaces).isEmpty)
                         .buttonStyle(.glassProminent)
+                        .controlSize(.large)
+
                     } else {
-                        Button("Done") { dismiss() }
-                            .buttonStyle(.glassProminent)
-                    }
+
+                        Button("Done", systemImage: "checkmark.circle") {
+                            dismiss()
+                        }
+                        .buttonStyle(.glassProminent)
+                        .controlSize(.large)                    }
+
                 }
-                
-                ToolbarItem(placement: .cancellationAction) {
+
+                ToolbarItem(placement: .destructiveAction) {
                     if isEditing {
-                        Button("Cancel") {
+                        Button("Cancel", systemImage: "xmark.circle"){
                             cancelEditing()
                         }
+                        .disabled(isSaving || draftTitle.trimmingCharacters(in: .whitespaces).isEmpty)
+                        .buttonStyle(.glass)
+                        .controlSize(.large)
+
                     } else {
-                        Button("Edit") {
+                        Button("Edit", systemImage: "pencil") {
                             startEditing()
                         }
+                        .buttonStyle(.glass)
+                        .controlSize(.large)
                     }
                 }
-            }
+        }
             .onAppear {
                 Task { await fetchDetails() }
             }
-        .frame(minWidth: 450, minHeight: 600)
+        .frame(minWidth: 450, minHeight: 500)
     }
 
     private var displayContent: some View {
@@ -98,20 +111,20 @@ struct TaskDetailView: View {
             headerSection
             
             VStack(spacing: 16) {
-                if let updated = taskItem.updated, let date = ISO8601DateFormatter().date(from: updated) {
-                    detailSection(title: "Last Updated", content: date.formatted(date: .long, time: .shortened), icon: "arrow.clockwise.circle")
+                if let completed = taskItem.completed, let date = completed.toDate() {
+                    detailSection(title: "Completed", content: date.formatted(date: .long, time: .shortened), icon: "checkmark.circle.fill", color: .green)
+                }
+
+                if let due = taskItem.due, let date = due.toDate() {
+                    detailSection(title: "Due Date", content: date.formatted(date: .long, time: .omitted), icon: "calendar")
                 }
 
                 if let notes = taskItem.notes, !notes.isEmpty {
                     detailSection(title: "Notes", content: notes, icon: "note.text")
                 }
-                
-                if let due = taskItem.due, let date = ISO8601DateFormatter().date(from: due) {
-                    detailSection(title: "Due Date", content: date.formatted(date: .long, time: .omitted), icon: "calendar")
-                }
-                
-                if let completed = taskItem.completed, let date = ISO8601DateFormatter().date(from: completed) {
-                    detailSection(title: "Completed", content: date.formatted(date: .long, time: .shortened), icon: "checkmark.circle.fill", color: .green)
+
+                if let updated = taskItem.updated, let date = updated.toDate() {
+                    detailSection(title: "Last Updated", content: date.formatted(date: .long, time: .shortened), icon: "arrow.clockwise.circle")
                 }
                 
                 statusSection
@@ -172,7 +185,7 @@ struct TaskDetailView: View {
         draftTitle = taskItem.title ?? ""
         draftNotes = taskItem.notes ?? ""
         if let due = taskItem.due {
-            draftDue = ISO8601DateFormatter().date(from: due)
+            draftDue = due.toDate()
         } else {
             draftDue = nil
         }
@@ -344,10 +357,13 @@ struct TaskDetailView: View {
     }
 
     private var headerSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        HStack(alignment: .center, spacing: 8) {
             Text(taskItem.title ?? "(No Title)")
                 .font(.title)
                 .fontWeight(.bold)
+
+            Spacer()
+
         }
     }
 
