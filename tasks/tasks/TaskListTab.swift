@@ -55,7 +55,7 @@ struct TaskListTab: View {
             .listStyle(.sidebar)
         }
         .sheet(item: $selectedTask) { task in
-            TaskDetailView(task: task, listId: list.id, viewModel: vm, auth: auth)
+            TaskSheetView(task: task, listId: list.id, viewModel: vm, auth: auth)
         }
         .onAppear {
             Task { await loadTasks(policy: hasLoadedOnce ? .staleOnly : .startup) }

@@ -59,15 +59,14 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $showingNewTaskSheet) {
-            NewTaskSheet(isFocused: $newTaskFieldFocused, onCreate: { title, notes, due in
-                Task { 
-                    await viewModel.createTask(title: title, notes: notes, due: due, auth: auth)
-                    showingNewTaskSheet = false 
-                }
-            }, onCancel: {
-                showingNewTaskSheet = false
-            })
-            .onDisappear { newTaskFieldFocused = false }
+            if let selectedListId = viewModel.selectedListId {
+                TaskSheetView(
+                    task: nil,
+                    listId: selectedListId,
+                    viewModel: TaskListViewModel(repository: viewModel.repository),
+                    auth: auth
+                )
+            }
         }
         .sheet(isPresented: $showingSignInSheet) {
             SignInView()
