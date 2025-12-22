@@ -2,9 +2,13 @@
 
 Google tasks for macOS
 
-![tasks](https://github.com/user-attachments/assets/2ba5ca6e-078d-4328-96a5-e8b9455062b8)
 
-<img width="1892" height="1214" alt="CleanShot 2025-10-15 at 12  23 38@2x" src="https://github.com/user-attachments/assets/172dffc3-fcee-4b40-a26b-51a617102893" />
+<img alt="1" src="https://github.com/user-attachments/assets/63ce767c-1655-45ea-bf1a-81644eb3a708" />
+
+<img alt="2" src="https://github.com/user-attachments/assets/9dcf88ca-6776-45e0-b14b-40a2bd297c74" />
+
+<img alt="3" src="https://github.com/user-attachments/assets/062bbe65-3d2c-42da-b942-8caa256cf014" />
+
 
 ![Screen Recording 2025-10-14 at 11 07 45 PM](https://github.com/user-attachments/assets/656c742c-64d2-4ea9-a065-be85c560e1a8)
 
