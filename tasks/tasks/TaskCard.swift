@@ -1,21 +1,27 @@
 import SwiftUI
 
 struct TaskCard: View {
-    let task: TaskItem
+    let taskItem: TaskItem
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text(task.title ?? "(no title)")
-                    .font(.headline)
-                Spacer()
-                if task.status == "completed" {
+                if taskItem.status == "completed" {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundColor(.green)
+                        .padding(.trailing, 2)
+                } else {
+                    Image(systemName: "circle")
+                        .foregroundColor(.gray)
+                        .padding(.trailing, 2)
                 }
+
+                Text(taskItem.title ?? "(no title)")
+                    .font(.headline)
+
             }
 
-            if let notes = task.notes, !notes.isEmpty {
+            if let notes = taskItem.notes, !notes.isEmpty {
                 Text(notes)
                     .font(.subheadline)
                     .foregroundColor(.secondary)
@@ -23,10 +29,15 @@ struct TaskCard: View {
             }
 
             HStack {
-                if let due = task.due, let date = due.toDate() {
-                    Text(date, style: .date)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                if let due = taskItem.due, let date = due.toDate() {
+                    Label {
+                        Text(date, style: .date)
+                    } icon: {
+                        Image(systemName: "calendar")
+                    }
+                    .padding(4)
+                    .glassEffect()
+//                    .clipShape(Capsule())
                 }
                 Spacer()
             }

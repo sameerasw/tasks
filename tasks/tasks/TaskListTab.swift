@@ -22,33 +22,19 @@ struct TaskListTab: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-
             List {
                 if vm.tasks.isEmpty {
                     Text("ʅ(°_°)ʃ  Nothing to see here").foregroundColor(.secondary)
                 } else {
-                    ForEach(Array(vm.tasks.enumerated()), id: \.element.id) { pair in
-                        let index = pair.offset
-                        let task = pair.element
-                        let isVisible = visibleTaskIDs.contains(task.id)
-
-                        TaskCard(task: task)
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                selectedTask = task
-                            }
-                            .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                                CompletionActionView(isCompleted: task.status == "completed") { toggleCompletion(for: task) }
-                            }
-                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                CompletionActionView(isCompleted: task.status == "completed") { toggleCompletion(for: task) }
-                            }
-                            .contextMenu { Button(role: .destructive) { deleteTask(task) } label: { Label("Delete Task", systemImage: "trash") } }
-                            .listRowBackground(Color.clear)
-                            .opacity(isVisible ? 1 : 0)
-                            .scaleEffect(isVisible ? 1 : 0.98)
-                            .offset(x: isVisible ? 0 : 30)
-                            .animation(.interactiveSpring(response: 0.45, dampingFraction: 0.75, blendDuration: 0.1).delay(Double(index) * 0.015), value: isVisible)
+                    ForEach(Array(vm.tasks.enumerated()), id: \.element.id) { index, task in
+                        TaskRowView(
+                            task: task,
+                            index: index,
+                            isVisible: visibleTaskIDs.contains(task.id),
+                            onTap: { selectedTask = task },
+                            toggleCompletion: { toggleCompletion(for: task) },
+                            deleteTask: { deleteTask(task) }
+                        )
                     }
                 }
             }
@@ -75,13 +61,11 @@ struct TaskListTab: View {
         Task { @MainActor in
             try? await Task.sleep(nanoseconds: 40_000_000)
             for (i, task) in vm.tasks.enumerated() {
-                // stagger each row
                 try? await Task.sleep(nanoseconds: UInt64(40_000_000 * i))
                 withAnimation { _ = visibleTaskIDs.insert(task.id) }
             }
         }
     }
-
 
     private func loadTasks(policy: RefreshPolicy) async {
         do {
@@ -89,12 +73,6 @@ struct TaskListTab: View {
         } catch {
             Task { @MainActor in await Task.yield(); alertMessage = "Failed to load tasks: \(error)"; hasError = true }
         }
-    }
-
-    private func completionSwipeButton(for task: TaskItem) -> some View {
-        let isCompleted = task.status == "completed"
-        return Button { toggleCompletion(for: task) } label: { Label(isCompleted ? "Mark Undone" : "Mark Done", systemImage: isCompleted ? "arrow.uturn.backward.circle" : "checkmark.circle") }
-            .tint(isCompleted ? .orange : .green)
     }
 
     private func toggleCompletion(for task: TaskItem) {
@@ -109,5 +87,36 @@ struct TaskListTab: View {
             do { try await vm.delete(task: task, listId: list.id, auth: auth) }
             catch { Task { @MainActor in await Task.yield(); alertMessage = "Failed to delete task: \(error)"; hasError = true } }
         }
+    }
+}
+
+private struct TaskRowView: View {
+    let task: TaskItem
+    let index: Int
+    let isVisible: Bool
+    let onTap: () -> Void
+    let toggleCompletion: () -> Void
+    let deleteTask: () -> Void
+
+    var body: some View {
+        TaskCard(taskItem: task)
+            .contentShape(Rectangle())
+            .onTapGesture(perform: onTap)
+            .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                CompletionActionView(isCompleted: task.status == "completed", action: toggleCompletion)
+            }
+            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                CompletionActionView(isCompleted: task.status == "completed", action: toggleCompletion)
+            }
+            .contextMenu {
+                Button(role: .destructive, action: deleteTask) {
+                    Label("Delete Task", systemImage: "trash")
+                }
+            }
+            .listRowBackground(Color.clear)
+            .opacity(isVisible ? 1 : 0)
+            .scaleEffect(isVisible ? 1 : 0.98)
+            .offset(x: isVisible ? 0 : 30)
+            .animation(.interactiveSpring(response: 0.45, dampingFraction: 0.75, blendDuration: 0.1).delay(Double(index) * 0.015), value: isVisible)
     }
 }
