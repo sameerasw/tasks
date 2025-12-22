@@ -32,9 +32,7 @@ struct TaskSheetView: View {
                 VisualEffectBlur(material: .hudWindow, blendingMode: .behindWindow)
                     .ignoresSafeArea()
 
-                if isLoading {
-                    ProgressView("Loading details...")
-                } else if let error = errorMessage {
+                if let error = errorMessage {
                     VStack(spacing: 16) {
                         Image(systemName: "exclamationmark.triangle")
                             .font(.largeTitle)
@@ -106,11 +104,17 @@ struct TaskSheetView: View {
                         .buttonStyle(.glass)
                         .controlSize(.large)
                     } else {
-                        Button("Edit", systemImage: "pencil") {
-                            startEditing()
+                        if isLoading {
+                            ProgressView()
+                                .controlSize(.small)
+                                .padding(.horizontal, 8)
+                        } else {
+                            Button("Edit", systemImage: "pencil") {
+                                startEditing()
+                            }
+                            .buttonStyle(.glass)
+                            .controlSize(.large)
                         }
-                        .buttonStyle(.glass)
-                        .controlSize(.large)
                     }
                 }
             }
