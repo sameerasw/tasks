@@ -65,3 +65,6 @@ fastlane/test_output
 *.xcconfig
 Secrets.xcconfig
 .DS_Store
+
+updates/
+*/updates/
