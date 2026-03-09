@@ -20,27 +20,44 @@ struct SignInView: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
 
-            HStack {
-                if hideClientId {
-                    SecureField("Custom Client ID (optional)", text: $customClientId)
-                } else {
-                    TextField("Custom Client ID (optional)", text: $customClientId)
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    if hideClientId {
+                        SecureField("Custom Client ID (optional)", text: $customClientId)
+                    } else {
+                        TextField("Custom Client ID (optional)", text: $customClientId)
+                    }
+                    Button(action: { hideClientId.toggle() }) {
+                        Image(systemName: hideClientId ? "eye.slash" : "eye")
+                    }
+                    .help(hideClientId ? "Show" : "Hide")
                 }
-                Button(action: { hideClientId.toggle() }) {
-                    Image(systemName: hideClientId ? "eye.slash" : "eye")
+
+                if GoogleAuthConfig.customClientID != nil && customClientId.isEmpty {
+                    Text("A custom Client ID is currently set and in use.")
+                        .font(.caption2)
+                        .foregroundColor(.blue)
                 }
-                .help(hideClientId ? "Show" : "Hide")
             }
 
             HStack(spacing: 12) {
                 Button("Save and Sign In") {
-                    saveClientIdIfNeeded()
+                    GoogleAuthConfig.saveCustomClientID(customClientId)
+                    showSaved = true
                     Task { do { try await auth.signIn(); dismiss() } catch { dismiss() } }
                 }
                 .keyboardShortcut(.defaultAction)
 
                 Button("Just Sign In") {
                     Task { do { try await auth.signIn(); dismiss() } catch { dismiss() } }
+                }
+
+                if GoogleAuthConfig.customClientID != nil {
+                    Button("Clear & Sign In") {
+                        GoogleAuthConfig.clearCustomClientID()
+                        customClientId = ""
+                        Task { do { try await auth.signIn(); dismiss() } catch { dismiss() } }
+                    }
                 }
 
                 Button("Cancel", role: .cancel) { dismiss() }
@@ -55,14 +72,10 @@ struct SignInView: View {
             Spacer()
         }
         .padding()
-        .frame(minWidth: 420, minHeight: 160)
-    }
-
-    private func saveClientIdIfNeeded() {
-        let trimmed = customClientId.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-        let _ = KeychainHelper.shared.save(Data(trimmed.utf8), service: keychainService, account: clientIDAccount)
-        showSaved = true
+        .onAppear {
+            customClientId = GoogleAuthConfig.customClientID ?? ""
+        }
+        .frame(minWidth: 420, minHeight: 200)
     }
 }
 

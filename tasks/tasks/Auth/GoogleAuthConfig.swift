@@ -34,4 +34,27 @@ enum GoogleAuthConfig {
 
     static var authEndpoint: String { "https://accounts.google.com/o/oauth2/v2/auth" }
     static var tokenEndpoint: String { "https://oauth2.googleapis.com/token" }
+
+    // MARK: - Custom Client ID Management
+
+    static var customClientID: String? {
+        guard let data = KeychainHelper.shared.read(service: keychainService, account: clientIDAccount),
+              let kc = String(data: data, encoding: .utf8) else {
+            return nil
+        }
+        let trimmed = kc.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
+    static func saveCustomClientID(_ clientID: String) {
+        let trimmed = clientID.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty {
+            let data = Data(trimmed.utf8)
+            let _ = KeychainHelper.shared.save(data, service: keychainService, account: clientIDAccount)
+        }
+    }
+
+    static func clearCustomClientID() {
+        KeychainHelper.shared.delete(service: keychainService, account: clientIDAccount)
+    }
 }

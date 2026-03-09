@@ -41,6 +41,34 @@ struct AboutView: View {
 
             Divider()
 
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Custom Client ID")
+                    .font(.headline)
+                
+                Text("You can override the default Google OAuth Client ID with your own for personal use.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                if GoogleAuthConfig.customClientID != nil {
+                    HStack {
+                        Text("A custom ID is set.")
+                            .font(.system(.caption, design: .monospaced))
+                        Button("Clear") {
+                            GoogleAuthConfig.clearCustomClientID()
+                        }
+                        .buttonStyle(.borderless)
+                        .foregroundColor(.red)
+                    }
+                } else {
+                    Text("Using default embedded Client ID.")
+                        .font(.caption)
+                        .italic()
+                }
+            }
+            .padding(.horizontal)
+
+            Divider()
+
             HStack {
                 Button(action: {
                     if let url = URL(string: "https://www.sameerasw.com") { NSWorkspace.shared.open(url) }
