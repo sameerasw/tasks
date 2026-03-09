@@ -97,7 +97,7 @@ private struct TaskRowView: View {
     let deleteTask: () -> Void
 
     var body: some View {
-        TaskCard(taskItem: task)
+        TaskCard(taskItem: task, onToggleCompletion: toggleCompletion)
             .contentShape(Rectangle())
             .onTapGesture(perform: onTap)
             .swipeActions(edge: .leading, allowsFullSwipe: true) {

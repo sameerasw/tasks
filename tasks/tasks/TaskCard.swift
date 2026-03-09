@@ -2,23 +2,28 @@ import SwiftUI
 
 struct TaskCard: View {
     let taskItem: TaskItem
+    var onToggleCompletion: (() -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                if taskItem.status == "completed" {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
-                        .padding(.trailing, 2)
-                } else {
-                    Image(systemName: "circle")
-                        .foregroundColor(.gray)
-                        .padding(.trailing, 2)
+                Group {
+                    if taskItem.status == "completed" {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                    } else {
+                        Image(systemName: "circle")
+                            .foregroundColor(.gray)
+                    }
+                }
+                .padding(.trailing, 2)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    onToggleCompletion?()
                 }
 
                 Text(taskItem.title ?? "(no title)")
                     .font(.headline)
-
             }
 
             if let notes = taskItem.notes, !notes.isEmpty {
