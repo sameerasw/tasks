@@ -106,16 +106,10 @@ struct DateShortcutButton: View {
                 .font(.caption)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
-                .background(color.opacity(isHovered ? 0.2 : 0.1))
-                .foregroundColor(color)
-                .cornerRadius(6)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 6)
-                        .stroke(color.opacity(0.2), lineWidth: 1)
-                )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.glassProminent)
         .onHover { isHovered = $0 }
+        .tint(color.opacity(isHovered ? 0.2 : 0.1))
     }
 }
 
@@ -176,7 +170,7 @@ struct DatePickerButton: View {
                 }
                 .background(Color(NSColor.windowBackgroundColor))
             }
-            .frame(width: 280)
+            .frame(width: 200)
         }
     }
 }
