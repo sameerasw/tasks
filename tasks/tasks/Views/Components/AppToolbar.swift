@@ -11,13 +11,7 @@ struct AppToolbar: ToolbarContent {
 
     var body: some ToolbarContent {
         ToolbarItemGroup {
-            if viewModel.hasError {
-                Button { viewModel.hasError = true /* This will trigger the sheet in ContentView */ } label: {
-                    Image(systemName: "exclamationmark.circle.fill")
-                        .foregroundColor(.red)
-                }
-                .help("View error details")
-            }
+
 
             if viewModel.loading {
                 ProgressView()
