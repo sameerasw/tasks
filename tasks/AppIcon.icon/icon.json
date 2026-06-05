@@ -6,6 +6,17 @@
     {
       "layers" : [
         {
+          "image-name" : "Google_Tasks_Logo_05.2026.svg",
+          "name" : "Google_Tasks_Logo_05.2026",
+          "position" : {
+            "scale" : 4.49,
+            "translation-in-points" : [
+              0,
+              0
+            ]
+          }
+        },
+        {
           "fill-specializations" : [
             {
               "value" : "automatic"
@@ -20,7 +31,7 @@
             }
           ],
           "glass" : true,
-          "hidden" : false,
+          "hidden" : true,
           "image-name" : "Google_Tasks_2021.svg.png",
           "name" : "Google_Tasks_2021.svg",
           "opacity" : 1,
