@@ -38,3 +38,5 @@ Quick steps:
 Note: This example stores the access token in UserDefaults for simplicity.
 In production you should store tokens in the macOS Keychain and handle
 refresh tokens properly.
+
+> Timed alerts are not available with the provided APIs by Google
